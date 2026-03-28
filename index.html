@@ -144,17 +144,22 @@
         .floating-toggle.active i { animation: spinDisc 3s linear infinite; }
         @keyframes spinDisc { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .music-player { position: fixed; bottom: 80px; right: 20px; width: 210px; background: rgba(110, 77, 84, 0.95); border: 1px solid var(--color-accent-light); border-radius: 20px; padding: 15px; transition: 0.4s; z-index: 1000; text-align: center; backdrop-filter: blur(10px); }
+        .music-player { position: fixed; bottom: 80px; right: 20px; width: 230px; background: rgba(110, 77, 84, 0.95); border: 1px solid var(--color-accent-light); border-radius: 20px; padding: 15px; transition: 0.4s; z-index: 1000; text-align: center; backdrop-filter: blur(10px); }
         .hidden-player { opacity: 0; transform: translateY(20px) scale(0.8); pointer-events: none; }
 
-        #play-btn { background: var(--gradient-main); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--color-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .player-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
+        .control-btn { background: none; border: none; color: var(--color-accent-light); font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .control-btn:hover { color: #fff; transform: scale(1.1); }
+        #play-btn { background: var(--gradient-main); border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; color: var(--color-primary); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
-        .volume-container { display: flex; align-items: center; gap: 8px; margin-top: 15px; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; }
+        .volume-container { display: flex; align-items: center; gap: 8px; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; }
         #volume-slider { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(240, 202, 205, 0.2); border-radius: 5px; outline: none; }
         #volume-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: var(--color-accent-light); cursor: pointer; }
 
         .mouse-sparkle { position: fixed; width: 6px; height: 6px; background: var(--color-white); border-radius: 50%; pointer-events: none; z-index: 9999; animation: sparkleAnim 0.8s linear forwards; }
         @keyframes sparkleAnim { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0) translateY(20px); } }
+        
+        #current-song-title { font-size: 0.65rem; color: var(--color-accent-light); margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; min-height: 20px; }
     </style>
 </head>
 <body>
@@ -168,10 +173,13 @@
     <button id="toggle-player-btn" class="floating-toggle"><i class="ph-fill ph-disc"></i></button>
     
     <div id="music-player" class="music-player hidden-player">
-        <div style="font-size:0.75rem; color:var(--color-accent-light); margin-bottom:12px; font-weight: bold;">FAOUZIA - HABIBI</div>
-        <audio id="audio-player" loop preload="auto"></audio>
-        <button id="play-btn"><i id="play-icon" class="ph-fill ph-play"></i></button>
-        
+        <div id="current-song-title">LOADING...</div>
+        <div class="player-controls">
+            <button id="prev-btn" class="control-btn"><i class="ph-fill ph-skip-back"></i></button>
+            <button id="play-btn"><i id="play-icon" class="ph-fill ph-play"></i></button>
+            <button id="next-btn" class="control-btn"><i class="ph-fill ph-skip-forward"></i></button>
+        </div>
+        <audio id="audio-player" preload="auto"></audio>
         <div class="volume-container">
             <i class="ph-fill ph-speaker-low" style="font-size: 12px;"></i>
             <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5">
@@ -198,20 +206,17 @@
                     <img src="https://xatimg.com/image/hRRAb58b1Xas.jpg" class="main-avatar">
                 </div>
             </div>
-
             <div id="profile-section" class="content-section hidden">
                 <div class="info-item">
                     <span class="info-label">𝑆𝑡𝑎𝑡𝑢𝑠</span>
                     <span class="info-value">” 𝑵𝒐𝒕 𝒆𝒗𝒆𝒓𝒚𝒐𝒏𝒆 𝒖 𝒍𝒐𝒔𝒆 𝒊𝒔 𝒂 𝒍𝒐𝒔𝒔 ”</span>
                 </div>
-                
                 <div class="info-item">
                     <span class="info-label">𝐿𝑜𝑐𝑎𝑡𝑖𝑜𝑛</span>
                     <span class="info-value" style="display: flex; align-items: center; gap: 8px;">
                         𝑀𝑜𝑟𝑟𝑜𝑐𝑐𝑜 <img src="https://flagcdn.com/w40/ma.png" style="width: 20px; border-radius: 2px;">
                     </span>
                 </div>
-
                 <div class="info-item">
                     <span class="info-label">𝑍𝑜𝑑𝑖𝑎𝑐 𝑠𝑖𝑔𝑛</span>
                     <span class="info-value" style="display: flex; align-items: center; gap: 8px;">
@@ -228,41 +233,45 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const playlist = [
+                { title: "FAOUZIA - HABIBI", url: "https://files.catbox.moe/bjl4bi.mp3" },
+                { title: "TalkinToys - Be My First One", url: "https://files.catbox.moe/c8o23o.mp3" },
+                { title: "Lana Del Rey - Summertime Sadness", url: "https://files.catbox.moe/wbs10h.mp3" },
+                { title: "Alex Warren - Ordinary", url: "https://files.catbox.moe/0mlsf8.mp3" },
+                { title: "Billie Eilish - i love you", url: "https://files.catbox.moe/bvzdeo.mp3" },
+                { title: "Rihanna - Stay ft. Mikky Ekko", url: "https://files.catbox.moe/n4t26s.mp3" }
+            ];
+
+            let currentIndex = 0;
             const loading = document.getElementById('loading-screen'),
                   container = document.querySelector('.container'),
                   audio = document.getElementById('audio-player'),
                   player = document.getElementById('music-player'),
                   playIcon = document.getElementById('play-icon'),
                   toggleBtn = document.getElementById('toggle-player-btn'),
-                  volumeSlider = document.getElementById('volume-slider');
+                  volumeSlider = document.getElementById('volume-slider'),
+                  songTitle = document.getElementById('current-song-title'),
+                  nextBtn = document.getElementById('next-btn'),
+                  prevBtn = document.getElementById('prev-btn');
 
-            audio.src = "https://files.catbox.moe/bjl4bi.mp3";
+            function loadSong(index) {
+                const track = playlist[index];
+                audio.src = track.url;
+                songTitle.innerText = track.title;
+            }
+
+            loadSong(currentIndex);
             audio.volume = 0.5;
             
             loading.onclick = () => {
                 loading.style.opacity = '0';
                 setTimeout(() => { loading.style.display = 'none'; }, 1000);
                 container.classList.add('visible');
-                
                 audio.play().then(() => { 
                     playIcon.className = "ph-fill ph-pause";
                     toggleBtn.classList.add('active');
-                }).catch(error => {
-                    console.log("Autoplay blocked.");
-                });
+                }).catch(e => {});
             };
-
-            document.querySelectorAll('.navbar a').forEach(link => {
-                link.onclick = (e) => {
-                    e.preventDefault();
-                    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-                    document.getElementById(link.dataset.target).classList.remove('hidden');
-                    document.querySelectorAll('.navbar a').forEach(a => a.classList.remove('active'));
-                    link.classList.add('active');
-                }
-            });
-
-            toggleBtn.onclick = () => player.classList.toggle('hidden-player');
 
             document.getElementById('play-btn').onclick = () => {
                 if (audio.paused) { 
@@ -276,9 +285,36 @@
                 }
             };
 
-            volumeSlider.oninput = (e) => {
-                audio.volume = e.target.value;
+            nextBtn.onclick = () => {
+                currentIndex = (currentIndex + 1) % playlist.length;
+                loadSong(currentIndex);
+                audio.play();
+                playIcon.className = "ph-fill ph-pause";
+                toggleBtn.classList.add('active');
             };
+
+            prevBtn.onclick = () => {
+                currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+                loadSong(currentIndex);
+                audio.play();
+                playIcon.className = "ph-fill ph-pause";
+                toggleBtn.classList.add('active');
+            };
+
+            audio.onended = () => { nextBtn.click(); };
+
+            document.querySelectorAll('.navbar a').forEach(link => {
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+                    document.getElementById(link.dataset.target).classList.remove('hidden');
+                    document.querySelectorAll('.navbar a').forEach(a => a.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+
+            toggleBtn.onclick = () => player.classList.toggle('hidden-player');
+            volumeSlider.oninput = (e) => { audio.volume = e.target.value; };
 
             document.addEventListener('mousemove', (e) => {
                 if (Math.random() > 0.8) {
